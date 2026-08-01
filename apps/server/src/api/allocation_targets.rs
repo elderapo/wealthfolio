@@ -207,6 +207,11 @@ struct CalculatePlanBody {
     available_cash: Decimal,
     #[serde(default)]
     scenario_mode: ScenarioMode,
+    /// Money about to be transferred in, deployed on top of `available_cash`.
+    /// Zero by default — see the field of the same name on
+    /// `CalculateRebalancePlanInput`.
+    #[serde(default)]
+    planned_contribution: Decimal,
     filter: AccountScope,
 }
 
@@ -215,6 +220,7 @@ fn resolve_rebalance_input(
     target_id: String,
     available_cash: Decimal,
     scenario_mode: ScenarioMode,
+    planned_contribution: Decimal,
     filter: &AccountScope,
 ) -> ApiResult<CalculateRebalancePlanInput> {
     let base_currency = state.base_currency.read().unwrap().clone();
@@ -229,6 +235,7 @@ fn resolve_rebalance_input(
         base_currency,
         aggregated_account_id: resolved.scope_id,
         scenario_mode,
+        planned_contribution,
     })
 }
 
@@ -241,6 +248,7 @@ async fn calculate_plan(
         body.target_id,
         body.available_cash,
         body.scenario_mode,
+        body.planned_contribution,
         &body.filter,
     )?;
     let plan = state.rebalance_service.calculate_plan(input).await?;

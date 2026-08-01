@@ -102,7 +102,9 @@
     "driverSentenceUnder": "{{name}} est à {{current}} % en dessous d'une cible de {{target}} %.",
     "modeVerbSells": "Les ventes et achats",
     "modeVerbHybrid": "La trésorerie et les ventes",
-    "modeVerbCashFlow": "Les achats par flux de trésorerie"
+    "modeVerbCashFlow": "Les achats par flux de trésorerie",
+    "plannedContribution": "Versement prévu",
+    "plannedContributionHint": "Pas encore dans le portefeuille — planification uniquement"
   },
   "narrative": {
     "liftAndShrink": "{{verb}} rapprochent {{lifted}} de la cible et réduisent la surpondération de {{shrank}} de {{before}} à {{after}}.",
@@ -163,7 +165,8 @@
     "sellConstraint": "Contrainte de vente",
     "turnoverCap": "Plafond de rotation",
     "thingsToKnow_one": "{{count}} point à connaître sur ce plan",
-    "thingsToKnow_other": "{{count}} points à connaître sur ce plan"
+    "thingsToKnow_other": "{{count}} points à connaître sur ce plan",
+    "plannedContribution": "Inclut un versement qui n'est pas encore réglé"
   },
   "trades": {
     "buy": "Achat",

@@ -9,6 +9,8 @@ export interface RebalancePlanParams {
   cash: number;
   filter: AccountScope;
   scenarioMode: ScenarioMode;
+  /** Money about to be transferred in, deployed on top of `cash`. */
+  plannedContribution: number;
   /** Snapshot of the portfolio source (available cash + holdings version) at calc time, for staleness detection. */
   sourceKey: string;
 }
@@ -32,6 +34,7 @@ export function useRebalancePlan(params: RebalancePlanParams) {
       accountScopeKey(params.filter),
       params.scenarioMode,
       params.cash,
+      params.plannedContribution,
     ],
     queryFn: async (): Promise<CachedRebalancePlan> => {
       const plan = await calculateRebalancePlan(
@@ -39,6 +42,7 @@ export function useRebalancePlan(params: RebalancePlanParams) {
         params.cash,
         params.filter,
         params.scenarioMode,
+        params.plannedContribution,
       );
       return { plan, sourceKey: params.sourceKey };
     },

@@ -102,7 +102,9 @@
     "driverSentenceUnder": "{{name}} sits {{current}}% under a {{target}}% target.",
     "modeVerbSells": "Sells and buys",
     "modeVerbHybrid": "Cash and sells",
-    "modeVerbCashFlow": "Cash-flow buys"
+    "modeVerbCashFlow": "Cash-flow buys",
+    "plannedContribution": "Planned contribution",
+    "plannedContributionHint": "Not in the portfolio yet — planning only"
   },
   "narrative": {
     "liftAndShrink": "{{verb}} lift {{lifted}} toward target and shrink the {{shrank}} overweight from {{before}} to {{after}}.",
@@ -163,7 +165,8 @@
     "sellConstraint": "Sell constraint",
     "turnoverCap": "Turnover cap",
     "thingsToKnow_one": "{{count}} thing to know about this plan",
-    "thingsToKnow_other": "{{count}} things to know about this plan"
+    "thingsToKnow_other": "{{count}} things to know about this plan",
+    "plannedContribution": "Includes a contribution that has not settled"
   },
   "trades": {
     "buy": "Buy",

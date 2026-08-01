@@ -102,7 +102,9 @@
     "driverSentenceUnder": "{{name}} está {{current}}% por debajo de un objetivo del {{target}}%.",
     "modeVerbSells": "Ventas y compras",
     "modeVerbHybrid": "Efectivo y ventas",
-    "modeVerbCashFlow": "Compras con flujo de efectivo"
+    "modeVerbCashFlow": "Compras con flujo de efectivo",
+    "plannedContribution": "Aportación prevista",
+    "plannedContributionHint": "Aún no está en la cartera: solo para planificar"
   },
   "narrative": {
     "liftAndShrink": "{{verb}} elevar {{lifted}} hacia el objetivo y reducir el sobrepeso de {{shrank}} de {{before}} a {{after}}.",
@@ -163,7 +165,8 @@
     "sellConstraint": "Restricción de venta",
     "turnoverCap": "Límite de rotación",
     "thingsToKnow_one": "{{count}} cosa que debes saber sobre este plan",
-    "thingsToKnow_other": "{{count}} cosas que debes saber sobre este plan"
+    "thingsToKnow_other": "{{count}} cosas que debes saber sobre este plan",
+    "plannedContribution": "Incluye una aportación que aún no se ha liquidado"
   },
   "trades": {
     "buy": "Comprar",
