@@ -436,6 +436,9 @@ impl RebalanceServiceTrait for RebalanceService {
             input.available_cash
         };
 
+        // Deployed alongside the cash on hand, so the cap above still guards
+        // exactly what it always guarded.
+        let planned_contribution = input.planned_contribution.max(Decimal::ZERO);
         // Load persisted constraints from DB.
         let constraints = self
             .allocation_target_service
@@ -513,6 +516,16 @@ impl RebalanceServiceTrait for RebalanceService {
             &quantity_by_asset,
             profile.whole_shares_only,
         );
+        if planned_contribution > Decimal::ZERO {
+            // Nothing else in the plan says the money has not arrived yet.
+            classification_warnings.push(RebalanceWarning {
+                kind: RebalanceWarningKind::PlannedContribution,
+                category_id: String::new(),
+                message: format!(
+                    "Plan includes {planned_contribution} of contribution that has not settled yet."
+                ),
+            });
+        }
         classification_warnings.extend(Self::tagged_cash_warnings(
             &profile.taxonomy_id,
             &taxonomy_contributions.contributions,
@@ -602,8 +615,12 @@ impl RebalanceServiceTrait for RebalanceService {
                 whole_shares_only: profile.whole_shares_only,
             },
             scenario_mode: input.scenario_mode,
-            available_cash,
-            total_value,
+            available_cash: available_cash + planned_contribution,
+            // Sizing and the projected allocation describe the portfolio as it
+            // will be. Only the "before" drift subtracts the contribution back
+            // out, since today's allocation is measured against today's total.
+            total_value: total_value + planned_contribution,
+            planned_contribution,
             categories,
             candidates,
             sell_candidates,
@@ -1143,6 +1160,7 @@ mod tests {
             base_currency: "USD".to_string(),
             aggregated_account_id: "agg".to_string(),
             scenario_mode: ScenarioMode::CashFlowOnly,
+            planned_contribution: Decimal::ZERO,
         }
     }
 
@@ -1319,6 +1337,88 @@ mod tests {
         assert!(
             err.to_string().contains("exceeds deployable cash in scope"),
             "{err}"
+        );
+    }
+
+    #[tokio::test]
+    async fn planned_contribution_is_deployed_on_top_of_cash_on_hand() {
+        // 500 on hand, 500 about to arrive: the plan deploys both. The cap on
+        // `available_cash` is untouched — the contribution is a separate input.
+        let total = dec!(10000);
+        let h = make_holding("h1", "VTI", dec!(10), dec!(9500));
+        let c = make_contribution(&h, "equity", dec!(9500));
+        let svc = make_service(
+            make_profile(RebalanceGoal::ExactTarget, false),
+            make_report(vec![make_drift_row("equity", 9500, 7000, total)], total),
+            make_contributions(vec![c]),
+            vec![make_cash_holding(dec!(500), "USD"), h],
+        );
+        let plan = svc
+            .calculate_plan(CalculateRebalancePlanInput {
+                planned_contribution: dec!(500),
+                ..make_input(dec!(500))
+            })
+            .await
+            .expect("a contribution alongside cash on hand must be accepted");
+        assert_eq!(plan.available_cash, dec!(1000));
+    }
+
+    #[tokio::test]
+    async fn planned_contribution_sizes_against_post_deployment_total() {
+        // The contribution is money not yet in the portfolio, so the projected
+        // allocation must divide by total + contribution. Dividing by today's
+        // total makes the "after" shares sum to well over 100%.
+        let total = dec!(10000);
+        let h = make_holding("h1", "VTI", dec!(10), dec!(9500));
+        let c = make_contribution(&h, "equity", dec!(9500));
+        let svc = make_service(
+            make_profile(RebalanceGoal::ExactTarget, false),
+            make_report(vec![make_drift_row("equity", 9500, 7000, total)], total),
+            make_contributions(vec![c]),
+            vec![make_cash_holding(dec!(500), "USD"), h],
+        );
+        let plan = svc
+            .calculate_plan(CalculateRebalancePlanInput {
+                planned_contribution: dec!(4500),
+                ..make_input(dec!(500))
+            })
+            .await
+            .unwrap();
+        let sum: i32 = plan.after_bps_by_category.values().sum();
+        assert!(
+            (9900..=10100).contains(&sum),
+            "after allocation must sum to ~100%, got {}bps",
+            sum
+        );
+    }
+
+    #[tokio::test]
+    async fn planned_contribution_leaves_before_drift_untouched() {
+        // The "before" drift describes today's portfolio, so it must ignore money
+        // that has not arrived — otherwise a large planned contribution would
+        // silently dilute the reported starting drift.
+        let total = dec!(10000);
+        let h = make_holding("h1", "VTI", dec!(10), dec!(9500));
+        let c = make_contribution(&h, "equity", dec!(9500));
+        let build = || {
+            make_service(
+                make_profile(RebalanceGoal::ExactTarget, false),
+                make_report(vec![make_drift_row("equity", 9500, 7000, total)], total),
+                make_contributions(vec![c.clone()]),
+                vec![make_cash_holding(dec!(500), "USD"), h.clone()],
+            )
+        };
+        let baseline = build().calculate_plan(make_input(dec!(500))).await.unwrap();
+        let planned = build()
+            .calculate_plan(CalculateRebalancePlanInput {
+                planned_contribution: dec!(4500),
+                ..make_input(dec!(500))
+            })
+            .await
+            .unwrap();
+        assert_eq!(
+            baseline.max_drift_bps_before, planned.max_drift_bps_before,
+            "a contribution that has not landed must not move the starting drift"
         );
     }
 
@@ -2164,6 +2264,7 @@ mod tests {
     ) -> CalculateRebalancePlanInput {
         CalculateRebalancePlanInput {
             scenario_mode: mode,
+            planned_contribution: Decimal::ZERO,
             ..make_input(available_cash)
         }
     }

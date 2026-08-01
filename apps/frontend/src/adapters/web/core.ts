@@ -1986,17 +1986,19 @@ export const invoke = async <T>(command: string, payload?: Record<string, unknow
       break;
     }
     case "calculate_rebalance_plan": {
-      const { targetId, availableCash, filter, scenarioMode } = payload as {
+      const { targetId, availableCash, filter, scenarioMode, plannedContribution } = payload as {
         targetId: string;
         availableCash: number;
         filter: unknown;
         scenarioMode: string;
+        plannedContribution?: number;
       };
       body = JSON.stringify({
         targetId,
         availableCash,
         filter,
         scenarioMode,
+        plannedContribution: plannedContribution ?? 0,
       });
       break;
     }

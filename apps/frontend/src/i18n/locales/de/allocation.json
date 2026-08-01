@@ -102,7 +102,9 @@
     "driverSentenceUnder": "{{name}} liegt {{current}} % unter einem Ziel von {{target}} %.",
     "modeVerbSells": "Verkäufe und Käufe",
     "modeVerbHybrid": "Bargeld und Verkäufe",
-    "modeVerbCashFlow": "Cashflow-Käufe"
+    "modeVerbCashFlow": "Cashflow-Käufe",
+    "plannedContribution": "Geplante Einzahlung",
+    "plannedContributionHint": "Noch nicht im Portfolio – nur zur Planung"
   },
   "narrative": {
     "liftAndShrink": "{{verb}} führen {{lifted}} näher an das Ziel und verringern die Übergewichtung von {{shrank}} von {{before}} auf {{after}}.",
@@ -163,7 +165,8 @@
     "sellConstraint": "Verkaufseinschränkung",
     "turnoverCap": "Umschlagsobergrenze",
     "thingsToKnow_one": "{{count}} Punkt, den Sie über diesen Plan wissen sollten",
-    "thingsToKnow_other": "{{count}} Punkte, die Sie über diesen Plan wissen sollten"
+    "thingsToKnow_other": "{{count}} Punkte, die Sie über diesen Plan wissen sollten",
+    "plannedContribution": "Enthält eine noch nicht gebuchte Einzahlung"
   },
   "trades": {
     "buy": "Kauf",

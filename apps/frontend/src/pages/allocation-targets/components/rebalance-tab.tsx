@@ -475,6 +475,8 @@ function PlannerInput({
   hasPlan,
   isCalculating,
   isSourceLoading,
+  contribution,
+  onContributionChange,
 }: {
   description: string;
   cashValue: string;
@@ -485,11 +487,14 @@ function PlannerInput({
   hasPlan: boolean;
   isCalculating: boolean;
   isSourceLoading: boolean;
+  contribution: string;
+  onContributionChange: (v: string) => void;
 }) {
   const { t } = useTranslation();
   const limit = cashInputLimit(availableCash, currency);
   const deploy = parseCashValue(cashValue);
   const overBudget = deploy > limit;
+  const extra = parseCashValue(contribution);
   const pct = limit > 0 ? Math.min(100, Math.max(0, (deploy / limit) * 100)) : 0;
   const fraction = currencyFractionDigits(currency);
 
@@ -501,7 +506,7 @@ function PlannerInput({
   ];
   const activePreset = presets.find((p) => Math.abs(p.value - deploy) <= 0.5 + limit * 0.001)?.id;
 
-  const canCalculate = !isCalculating && !isSourceLoading && limit > 0 && deploy > 0 && !overBudget;
+  const canCalculate = !isCalculating && !isSourceLoading && deploy + extra > 0 && !overBudget;
 
   return (
     <div className="flex h-full flex-col">
@@ -543,6 +548,29 @@ function PlannerInput({
         className="lever-slider mt-2.5 block w-full disabled:cursor-not-allowed disabled:opacity-50"
         style={{ ["--lever-pct" as string]: `${pct}%` }}
       />
+
+      <label className="border-border/60 mt-3 flex items-baseline justify-between gap-3 border-t pt-3">
+        <span className="text-muted-foreground font-mono text-xs">
+          {t("allocation:planner.plannedContribution")}
+        </span>
+        <span className="flex items-baseline font-mono">
+          <span className="text-muted-foreground mr-0.5 text-xs">{currencySymbol(currency)}</span>
+          <input
+            value={contribution}
+            onChange={(e) => onContributionChange(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && canCalculate && onCalculate()}
+            disabled={isSourceLoading}
+            inputMode="decimal"
+            placeholder="0"
+            className="placeholder:text-muted-foreground/50 w-24 min-w-0 bg-transparent text-right text-sm font-semibold tabular-nums outline-none disabled:cursor-not-allowed"
+          />
+        </span>
+      </label>
+      {extra > 0 && (
+        <p className="text-muted-foreground mt-1 text-right font-mono text-[11px]">
+          {t("allocation:planner.plannedContributionHint")}
+        </p>
+      )}
 
       <div className="mt-2.5 grid grid-cols-4 gap-2 sm:flex sm:items-center sm:gap-1.5">
         {presets.map((p) => (
@@ -1064,6 +1092,7 @@ const WARN_LABEL_KEYS: Record<string, string> = {
   partial_classification: "allocation:warnings.partialClassification",
   constraint_skipped_sell: "allocation:warnings.sellConstraint",
   turnover_cap_reached: "allocation:warnings.turnoverCap",
+  planned_contribution: "allocation:warnings.plannedContribution",
 };
 
 function Warnings({ items }: { items: RebalanceWarning[] }) {
@@ -1331,6 +1360,7 @@ export function RebalanceTab({
   const cash = parseCashValue(cashValue);
   const availableCashLimit = cashInputLimit(availableCash, currency);
   const sourceReady = !isSourceLoading && !!driftReport;
+  const [contribution, setContribution] = useState("");
   const sourceKey = `${inputContextKey}:${availableCash}:${sourceVersion}`;
 
   const planQuery = useRebalancePlan({
@@ -1338,6 +1368,7 @@ export function RebalanceTab({
     cash,
     filter: accountScope,
     scenarioMode,
+    plannedContribution: parseCashValue(contribution),
     sourceKey,
   });
   const cachedPlan = planQuery.data ?? null;
@@ -1361,11 +1392,13 @@ export function RebalanceTab({
       toast.error(t("allocation:toast.dataLoading"));
       return;
     }
-    if (availableCashLimit <= 0 && !isSellMode) {
+    // A contribution is deployable on its own, so an empty scope is no longer a
+    // dead end — but there still has to be something to deploy.
+    if (availableCashLimit <= 0 && !isSellMode && parseCashValue(contribution) <= 0) {
       toast.error(t("allocation:toast.noCashAvailable"));
       return;
     }
-    if (cash <= 0 && !isSellMode) {
+    if (cash + parseCashValue(contribution) <= 0 && !isSellMode) {
       toast.error(t("allocation:toast.enterValidCash"));
       return;
     }
@@ -1435,6 +1468,8 @@ export function RebalanceTab({
                 hasPlan={!!plan || hasStalePlan}
                 isCalculating={isCalculating}
                 isSourceLoading={!sourceReady}
+                contribution={contribution}
+                onContributionChange={setContribution}
               />
             </div>
             <div className="px-4 py-4 sm:px-5 sm:py-5">

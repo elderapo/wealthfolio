@@ -67,7 +67,15 @@ pub struct RebalanceInput {
     pub profile: RebalanceProfile,
     pub scenario_mode: ScenarioMode,
     pub available_cash: Decimal,
+    /// Total AFTER the plan is executed. Equals the portfolio value today unless
+    /// a planned contribution is in play, in which case it already includes it —
+    /// targets, projections and the "after" drift must all size against the
+    /// portfolio as it will be, not as it is.
     pub total_value: Decimal,
+    /// Money not yet in the portfolio (a transfer the user is about to make).
+    /// Zero in the normal flow. Only the "before" drift subtracts it back out:
+    /// today's allocation must be measured against today's portfolio.
+    pub planned_contribution: Decimal,
     pub categories: Vec<CategoryState>,
     pub candidates: Vec<AssetCandidate>,
     pub sell_candidates: Vec<SellCandidate>,
@@ -831,6 +839,7 @@ impl RebalanceOptimizer for DriftPriorityOptimizer {
             scenario_mode,
             available_cash,
             total_value,
+            planned_contribution,
             categories,
             mut candidates,
             sell_candidates,
@@ -859,7 +868,8 @@ impl RebalanceOptimizer for DriftPriorityOptimizer {
             .map(|c| (c.category_id.clone(), c.current_value))
             .collect();
 
-        let max_drift_before = Self::max_drift_bps(&values, &categories, total_value);
+        let total_value_before = total_value - planned_contribution;
+        let max_drift_before = Self::max_drift_bps(&values, &categories, total_value_before);
 
         // ── Sell phase (SellToRebalance / Hybrid) ────────────────────────────
         //
@@ -1365,6 +1375,7 @@ mod tests {
         //   → BOND desired = 4000-800 = 3200 bps, current 3200 → already at desired
         //   → greedy has nothing to do, all cash goes to proportional top-up
         RebalanceInput {
+            planned_contribution: Decimal::ZERO,
             profile: RebalanceProfile {
                 target_id: "test".to_string(),
                 drift_band_bps: 500,
@@ -1466,6 +1477,7 @@ mod tests {
         // EQUITY 30% (target 70%), BOND 70% (target 30%).
         // BND is overweight, VTI is underweight.
         RebalanceInput {
+            planned_contribution: Decimal::ZERO,
             profile: RebalanceProfile {
                 target_id: "test".to_string(),
                 drift_band_bps: 500,
@@ -1653,6 +1665,7 @@ mod tests {
     fn buy_reasons_use_running_underweight_after_prior_buys() {
         let optimizer = DriftPriorityOptimizer;
         let input = RebalanceInput {
+            planned_contribution: Decimal::ZERO,
             profile: RebalanceProfile {
                 target_id: "test".to_string(),
                 drift_band_bps: 0,

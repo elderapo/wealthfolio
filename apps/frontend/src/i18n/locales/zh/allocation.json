@@ -102,7 +102,9 @@
     "driverSentenceUnder": "{{name}} 位于 {{current}}%，低于 {{target}}% 的目标。",
     "modeVerbSells": "卖出并买入",
     "modeVerbHybrid": "现金与卖出",
-    "modeVerbCashFlow": "现金流买入"
+    "modeVerbCashFlow": "现金流买入",
+    "plannedContribution": "计划注资",
+    "plannedContributionHint": "尚未进入投资组合——仅用于规划"
   },
   "narrative": {
     "liftAndShrink": "{{verb}}将 {{lifted}} 提升至目标，并将 {{shrank}} 的超配从 {{before}} 缩减至 {{after}}。",
@@ -163,7 +165,8 @@
     "sellConstraint": "卖出约束",
     "turnoverCap": "换手率上限",
     "thingsToKnow_one": "关于此方案有 {{count}} 项须知",
-    "thingsToKnow_other": "关于此方案有 {{count}} 项须知"
+    "thingsToKnow_other": "关于此方案有 {{count}} 项须知",
+    "plannedContribution": "包含尚未到账的注资"
   },
   "trades": {
     "buy": "买入",

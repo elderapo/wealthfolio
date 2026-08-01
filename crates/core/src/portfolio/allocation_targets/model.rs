@@ -408,6 +408,16 @@ pub struct CalculateRebalancePlanInput {
     pub aggregated_account_id: String,
     #[serde(default)]
     pub scenario_mode: ScenarioMode,
+    /// Money about to be transferred in, deployed on top of `available_cash`.
+    ///
+    /// Zero in the normal flow, which leaves every existing rule untouched:
+    /// `available_cash` is still capped at the cash actually held in scope.
+    /// A non-zero value answers the question an accumulating investor has
+    /// before the transfer settles — "I am about to send X, what should I buy?"
+    ///
+    /// Planning only. Nothing is persisted and no balance is altered.
+    #[serde(default)]
+    pub planned_contribution: Decimal,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -424,6 +434,8 @@ pub enum RebalanceWarningKind {
     ConstraintSkippedSell,
     /// The sell phase stopped because the turnover cap was reached.
     TurnoverCapReached,
+    /// The plan deploys money that has not reached the portfolio yet.
+    PlannedContribution,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
